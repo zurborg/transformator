@@ -66,8 +66,6 @@ compile = (obj) ->
 	null
 
 server = net.createServer apply ->
-	console.debug 'client connected'
-
 	@on 'end', ->
 		# do nothing
 	
