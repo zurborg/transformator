@@ -3,13 +3,13 @@ jade = require 'jade'
 net = require 'net'
 cbor = require 'cbor'
 mod_minify = require 'minify'
-condvar = require 'condvar'
+cvar = require 'cvar'
 transformers = require 'transformers'
 
 pack = (obj) -> cbor.Encoder.encode(obj)
 
 sync = (func) ->
-	cv = new condvar
+	cv = new cvar
 	x = func(-> cv.send(arguments))
 	throw x if x?
 	cv.recv()
