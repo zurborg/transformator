@@ -3,25 +3,21 @@ jade = require 'jade'
 net = require 'net'
 cbor = require 'cbor'
 mod_minify = require 'minify'
-cvar = require 'cvar'
+Sync = require 'sync'
 transformers = require 'transformers'
 
 pack = (obj) -> cbor.Encoder.encode(obj)
 
-sync = (func) ->
-	cv = new cvar
-	x = func(-> cv.send(arguments))
-	throw x if x?
-	cv.recv()
-
 minify = (ext, input) ->
-	[error, result] = sync (fn) ->
+	fn = (ext, input, cb) ->
+		_cb = (error, data) ->
+			throw "minify: #{error}" if error
+			cb null, data
 		mod_minify {
 			ext: ".#{ext}"
 			data: "#{input}"
-		}, fn, fn
-	throw "#{error}" if error?
-	result
+		}, _cb, _cb
+	fn.sync null, ext, input
 
 transformers['jade'] =
 	outputFormat: 'html'
@@ -76,20 +72,21 @@ server = net.createServer apply ->
 		console.error err
 
 	sink.on 'complete', (obj) =>
-		answer = { error: 'Could not process input for unknown reason' }
-		try
-			result = compile(obj)
-			if result?
-				answer = { result: "#{result}" }
-		catch e
-			answer = { error: "In compile(...): #{e}" }
-		try
-			buf = pack(answer)
-		catch e
-			console.error answer
-			buf = pack({ error: "In pack(...): #{e}" })
-		@write(buf)
-		@end
+		Sync =>
+			answer = { error: 'Could not process input for unknown reason' }
+			try
+				result = compile(obj)
+				if result?
+					answer = { result: "#{result}" }
+			catch e
+				answer = { error: "In compile(...): #{e}" }
+			try
+				buf = pack(answer)
+			catch e
+				console.error answer
+				buf = pack({ error: "In pack(...): #{e}" })
+			@write(buf)
+			@end
 
 	@pipe sink
 
