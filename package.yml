@@ -1,6 +1,6 @@
 ---
 name: transformator
-version: 0.1.2
+version: 0.1.3
 description: event-based server for jade-lang, minify and transformers
 keywords:
   - jade
