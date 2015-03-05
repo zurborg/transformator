@@ -36,7 +36,10 @@ compile = (obj) ->
 	[engine, input, data] = obj
 	switch "#{engine}"
 		when 'jade'
-			fn = jade.compile "#{input}"
+			try
+				fn = jade.compile "#{input}"
+			catch e
+				throw "jade: #{e}"
 			return fn(data)
 		when 'minify_js'   then return minify 'js'  , input
 		when 'minify_css'  then return minify 'css' , input
@@ -58,7 +61,11 @@ compile = (obj) ->
 			transformer = transformers[engine]
 			throw 'unknown engine' unless transformer?
 			throw 'unsupported engine' unless transformer.sync
-			return transformer.renderSync "#{input}"
+			try
+				data = transformer.renderSync "#{input}"
+			catch e
+				throw "#{engine}: #{e}"
+			return data
 	null
 
 server = net.createServer apply ->
